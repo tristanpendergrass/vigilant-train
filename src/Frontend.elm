@@ -2,8 +2,9 @@ module Frontend exposing (..)
 
 import Browser exposing (UrlRequest(..))
 import Browser.Navigation as Nav
-import Html
-import Html.Attributes as Attr
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import Lamdera
 import Types exposing (..)
 import Url
@@ -66,13 +67,13 @@ updateFromBackend msg model =
 view model =
     { title = ""
     , body =
-        [ Html.div [ Attr.style "text-align" "center", Attr.style "padding-top" "40px" ]
-            [ Html.img [ Attr.src "https://lamdera.app/lamdera-logo-black.png", Attr.width 150 ] []
-            , Html.div
-                [ Attr.style "font-family" "sans-serif"
-                , Attr.style "padding-top" "40px"
+        [ div [ style "text-align" "center", style "padding-top" "40px" ]
+            [ img [ src "https://lamdera.app/lamdera-logo-black.png", width 150 ] []
+            , div
+                [ style "font-family" "sans-serif"
+                , style "padding-top" "40px"
                 ]
-                [ Html.text model.message ]
+                [ text model.message ]
             ]
         ]
     }
