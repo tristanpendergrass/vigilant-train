@@ -4,19 +4,18 @@ import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
 import Game
 import Lamdera exposing (ClientId)
+import NetworkModel exposing (NetworkModel)
 import Url exposing (Url)
 
 
 type Connection
-    = Connected ClientId Game.Model
+    = Connected NetworkModel
     | NotConnected
 
 
 type alias FrontendModel =
     { key : Key
     , connection : Connection
-    , localMsgs : List Game.Msg
-    , serverSnapshot : Game.Model
     }
 
 

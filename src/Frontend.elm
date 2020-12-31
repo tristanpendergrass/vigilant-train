@@ -8,18 +8,13 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Lamdera
 import List.Extra
+import NetworkModel exposing (NetworkModel)
 import Types exposing (..)
 import Url
 
 
 type alias Model =
     FrontendModel
-
-
-type alias NetworkModel =
-    { localMsgs : List FrontendMsg
-    , serverState : Model
-    }
 
 
 app =
@@ -38,8 +33,6 @@ init : Url.Url -> Nav.Key -> ( Model, Cmd FrontendMsg )
 init url key =
     ( { key = key
       , connection = NotConnected
-      , localMsgs = []
-      , serverSnapshot = Game.init
       }
     , Lamdera.sendToBackend RequestConnection
     )
@@ -71,11 +64,24 @@ update msg model =
                 NotConnected ->
                     ( model, Cmd.none )
 
-                Connected clientId gameModel ->
-                    ( { model
-                        | connection = Connected clientId (Game.update Game.Increment gameModel)
-                        , localMsgs = Game.Increment :: model.localMsgs
-                      }
+                Connected networkModel ->
+                    let
+                        localMsgs : List Game.Msg
+                        localMsgs =
+                            Game.Increment :: networkModel.localMsgs
+
+                        localModel : Game.Model
+                        localModel =
+                            Game.update Game.Increment networkModel.localModel
+
+                        newNetworkModel : NetworkModel
+                        newNetworkModel =
+                            { networkModel
+                                | localModel = localModel
+                                , localMsgs = localMsgs
+                            }
+                    in
+                    ( { model | connection = Connected newNetworkModel }
                     , Lamdera.sendToBackend (UpdateGame Game.Increment)
                     )
 
@@ -87,37 +93,52 @@ updateFromBackend msg model =
             ( model, Cmd.none )
 
         GrantConnection clientId gameModel ->
-            ( { model | connection = Connected clientId gameModel, serverSnapshot = gameModel }, Cmd.none )
+            let
+                networkModel : NetworkModel
+                networkModel =
+                    NetworkModel.init clientId gameModel
+            in
+            ( { model | connection = Connected networkModel }, Cmd.none )
 
         GameUpdated updaterId gameMsg ->
             case model.connection of
                 NotConnected ->
                     ( model, Cmd.none )
 
-                Connected clientId gameModel ->
-                    if clientId == updaterId then
-                        ( { model
-                            | localMsgs = List.Extra.remove gameMsg model.localMsgs -- localMsgs.remove(gameMsg)
-                            , serverSnapshot = Game.update gameMsg model.serverSnapshot
-                          }
+                Connected networkModel ->
+                    if networkModel.clientId == updaterId then
+                        let
+                            -- TODO: change to serverSnapshot
+                            newNetworkModel : NetworkModel
+                            newNetworkModel =
+                                { networkModel
+                                    | serverModel = Game.update gameMsg networkModel.serverModel
+                                    , localMsgs = List.Extra.remove gameMsg networkModel.localMsgs
+                                }
+                        in
+                        ( { model | connection = Connected newNetworkModel }
                         , Cmd.none
                         )
 
                     else
                         let
-                            newServerSnapshot : Game.Model
-                            newServerSnapshot =
-                                Game.update gameMsg (Debug.log "gameModel" model.serverSnapshot)
+                            newServerModel : Game.Model
+                            newServerModel =
+                                Game.update gameMsg networkModel.serverModel
 
-                            newGameModel : Game.Model
-                            newGameModel =
-                                Debug.log "model.localMsgs" model.localMsgs
-                                    |> List.foldl Game.update (Debug.log "newServerSnapshot" newServerSnapshot)
+                            newLocalModel : Game.Model
+                            newLocalModel =
+                                networkModel.localMsgs
+                                    |> List.foldl Game.update newServerModel
+
+                            newNetworkModel : NetworkModel
+                            newNetworkModel =
+                                { networkModel
+                                    | serverModel = newServerModel
+                                    , localModel = newLocalModel
+                                }
                         in
-                        ( { model
-                            | connection = Connected clientId (Debug.log "newGameModel" newGameModel)
-                            , serverSnapshot = newServerSnapshot
-                          }
+                        ( { model | connection = Connected newNetworkModel }
                         , Cmd.none
                         )
 
@@ -135,14 +156,14 @@ view model =
                     NotConnected ->
                         text "Establishing connection"
 
-                    Connected _ counter ->
+                    Connected networkModel ->
                         div []
-                            [ div [] [ text <| String.fromInt counter ]
+                            [ div [] [ text <| String.fromInt networkModel.localModel ]
                             , button [ onClick HandleClick ] [ text "Click me" ]
                             , hr [] []
 
                             -- TODO: move localMsgs and serverShapshot to be in connection
-                            , div [] [ text <| "ServerSnapshot: " ++ String.fromInt model.serverSnapshot ]
+                            , div [] [ text <| "ServerSnapshot: " ++ String.fromInt networkModel.serverModel ]
                             , div [] [ text "localMsgs:" ]
                             , ul []
                                 (List.map
@@ -151,7 +172,7 @@ view model =
                                             Game.Increment ->
                                                 li [] [ text "Increment" ]
                                     )
-                                    model.localMsgs
+                                    networkModel.localMsgs
                                 )
                             ]
                 ]
