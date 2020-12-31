@@ -6,7 +6,7 @@ import Lamdera exposing (ClientId)
 
 type alias NetworkModel =
     { clientId : ClientId -- client id of this frontend
-    , serverModel : Game.Model -- what this frontend thinks the server thinks is this model
+    , serverSnapshot : Game.Model -- what this frontend thinks the server thinks is this model
     , localMsgs : List Game.Msg -- updates to the model that have been sent to the server but not confirmed
     , localModel : Game.Model -- serverModel with localMsgs applied
     }
@@ -15,7 +15,7 @@ type alias NetworkModel =
 init : ClientId -> Game.Model -> NetworkModel
 init clientId initialModel =
     { clientId = clientId
-    , serverModel = initialModel
+    , serverSnapshot = initialModel
     , localMsgs = []
     , localModel = initialModel
     }

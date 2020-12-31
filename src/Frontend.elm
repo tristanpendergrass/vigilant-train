@@ -108,11 +108,10 @@ updateFromBackend msg model =
                 Connected networkModel ->
                     if networkModel.clientId == updaterId then
                         let
-                            -- TODO: change to serverSnapshot
                             newNetworkModel : NetworkModel
                             newNetworkModel =
                                 { networkModel
-                                    | serverModel = Game.update gameMsg networkModel.serverModel
+                                    | serverSnapshot = Game.update gameMsg networkModel.serverSnapshot
                                     , localMsgs = List.Extra.remove gameMsg networkModel.localMsgs
                                 }
                         in
@@ -124,7 +123,7 @@ updateFromBackend msg model =
                         let
                             newServerModel : Game.Model
                             newServerModel =
-                                Game.update gameMsg networkModel.serverModel
+                                Game.update gameMsg networkModel.serverSnapshot
 
                             newLocalModel : Game.Model
                             newLocalModel =
@@ -134,7 +133,7 @@ updateFromBackend msg model =
                             newNetworkModel : NetworkModel
                             newNetworkModel =
                                 { networkModel
-                                    | serverModel = newServerModel
+                                    | serverSnapshot = newServerModel
                                     , localModel = newLocalModel
                                 }
                         in
@@ -163,7 +162,7 @@ view model =
                             , hr [] []
 
                             -- TODO: move localMsgs and serverShapshot to be in connection
-                            , div [] [ text <| "ServerSnapshot: " ++ String.fromInt networkModel.serverModel ]
+                            , div [] [ text <| "ServerSnapshot: " ++ String.fromInt networkModel.serverSnapshot ]
                             , div [] [ text "localMsgs:" ]
                             , ul []
                                 (List.map
