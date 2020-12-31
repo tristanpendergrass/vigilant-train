@@ -1,5 +1,6 @@
 module Backend exposing (..)
 
+import Game
 import Html
 import Lamdera exposing (ClientId, SessionId)
 import Types exposing (..)
@@ -20,7 +21,7 @@ app =
 
 init : ( Model, Cmd BackendMsg )
 init =
-    ( { message = "Hello!" }
+    ( Game.init
     , Cmd.none
     )
 
@@ -37,3 +38,9 @@ updateFromFrontend sessionId clientId msg model =
     case msg of
         NoOpToBackend ->
             ( model, Cmd.none )
+
+        RequestConnection ->
+            ( model, Lamdera.sendToFrontend clientId (GrantConnection clientId model) )
+
+        UpdateGame gameMsg ->
+            ( Game.update gameMsg model, Lamdera.broadcast <| GameUpdated clientId gameMsg )
