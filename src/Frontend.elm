@@ -74,7 +74,7 @@ update msg model =
                         localModel =
                             Game.update Game.Increment networkModel.localModel
 
-                        newNetworkModel : NetworkModel
+                        newNetworkModel : NetworkModel Game.Model Game.Msg
                         newNetworkModel =
                             { networkModel
                                 | localModel = localModel
@@ -94,7 +94,7 @@ updateFromBackend msg model =
 
         GrantConnection clientId gameModel ->
             let
-                networkModel : NetworkModel
+                networkModel : NetworkModel Game.Model Game.Msg
                 networkModel =
                     NetworkModel.init clientId gameModel
             in
@@ -108,7 +108,7 @@ updateFromBackend msg model =
                 Connected networkModel ->
                     if networkModel.clientId == updaterId then
                         let
-                            newNetworkModel : NetworkModel
+                            newNetworkModel : NetworkModel Game.Model Game.Msg
                             newNetworkModel =
                                 { networkModel
                                     | serverSnapshot = Game.update gameMsg networkModel.serverSnapshot
@@ -130,7 +130,7 @@ updateFromBackend msg model =
                                 networkModel.localMsgs
                                     |> List.foldl Game.update newServerModel
 
-                            newNetworkModel : NetworkModel
+                            newNetworkModel : NetworkModel Game.Model Game.Msg
                             newNetworkModel =
                                 { networkModel
                                     | serverSnapshot = newServerModel

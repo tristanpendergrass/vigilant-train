@@ -9,7 +9,7 @@ import Url exposing (Url)
 
 
 type Connection
-    = Connected NetworkModel
+    = Connected (NetworkModel Game.Model Game.Msg)
     | NotConnected
 
 
